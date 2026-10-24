@@ -779,22 +779,12 @@ static int sc3332p_set_vflip(struct tx_isp_subdev *sd, int enable)
 	uint8_t val;
 	struct tx_isp_sensor *sensor = sd_to_sensor_device(sd);
 
-	/* 2'b01:mirror,2'b10:filp */
-	val = sc3332p_read(sd, 0x3221, &val);
-	switch(enable) {
-	case 0:
+	/* The T31 ISP mirrors on its own; the sensor handles only the vertical flip. */
+	ret = sc3332p_read(sd, 0x3221, &val);
+	if(enable & 0x02)
+		val = (val & 0xF9) | 0x60;
+	else
 		val &= 0x99;
-		break;
-	case 1:
-		val = ((val & 0x9F) | 0x06);
-		break;
-	case 2:
-		val = ((val & 0xF9) | 0x60);
-		break;
-	case 3:
-		val |= 0x66;
-		break;
-	}
 	sc3332p_write(sd, 0x3221, val);
 	if(!ret)
 		ret = tx_isp_call_subdev_notify(sd, TX_ISP_EVENT_SYNC_SENSOR_ATTR, &sensor->video);
